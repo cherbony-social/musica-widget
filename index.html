@@ -3,8 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Reproductor de música</title>
+  <title>Música de la invitación</title>
   <style>
+    /* ============ PERSONALIZA AQUÍ LOS COLORES ============ */
+    :root {
+      --fondo: rgba(255, 255, 255, 0.88);   /* fondo de la tarjeta */
+      --acento: #b08d57;                    /* botón, barra y ecualizador */
+      --acento-claro: #e8dcc6;              /* fondo de la barra de progreso */
+      --texto: #3a3a3a;                     /* color del texto */
+      --texto-suave: #8a8a8a;               /* color del crédito */
+      --fuente: Georgia, "Times New Roman", serif;
+      --radio: 999px;                       /* 999px = píldora, 16px = esquinas suaves */
+    }
+    /* ======================================================= */
+
+    * { box-sizing: border-box; }
     html, body {
       margin: 0;
       padding: 0;
@@ -12,36 +25,191 @@
       height: 100%;
       background: transparent;
       overflow: hidden;
+      font-family: var(--fuente);
+      color: var(--texto);
     }
-    .contenedor {
+    .centro {
       width: 100%;
       height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 8px;
-      box-sizing: border-box;
+      padding: 8px 12px;
     }
-    iframe {
+    .player {
       width: 100%;
-      max-width: 700px;
-      height: 166px;
+      max-width: 420px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 18px 10px 10px;
+      background: var(--fondo);
+      border-radius: var(--radio);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+      backdrop-filter: blur(4px);
+    }
+    #btn {
+      flex: 0 0 auto;
+      width: 48px;
+      height: 48px;
       border: 0;
+      border-radius: 50%;
+      background: var(--acento);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform .15s ease, filter .15s ease;
+    }
+    #btn:hover { filter: brightness(1.08); transform: scale(1.04); }
+    #btn:active { transform: scale(0.96); }
+    #btn:focus-visible { outline: 3px solid var(--acento); outline-offset: 3px; }
+    #btn svg { width: 22px; height: 22px; fill: currentColor; }
+    #btn .ico-pausa { display: none; }
+    .sonando #btn .ico-play { display: none; }
+    .sonando #btn .ico-pausa { display: block; }
+
+    .info { flex: 1 1 auto; min-width: 0; }
+    .titulo {
+      font-size: 15px;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .credito {
+      font-size: 11px;
+      color: var(--texto-suave);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .credito:empty { display: none; }
+    .barra {
+      height: 6px;
+      margin-top: 8px;
+      background: var(--acento-claro);
+      border-radius: 6px;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    #progreso {
+      width: 0%;
+      height: 100%;
+      background: var(--acento);
+      border-radius: 6px;
+    }
+
+    /* Ecualizador animado (solo se mueve mientras suena) */
+    .eq {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 22px;
+    }
+    .eq span {
+      width: 3px;
+      height: 4px;
+      background: var(--acento);
+      border-radius: 2px;
+    }
+    .sonando .eq span { animation: salto 0.9s ease-in-out infinite; }
+    .sonando .eq span:nth-child(2) { animation-delay: .2s; }
+    .sonando .eq span:nth-child(3) { animation-delay: .4s; }
+    .sonando .eq span:nth-child(4) { animation-delay: .1s; }
+    @keyframes salto { 0%, 100% { height: 4px; } 50% { height: 20px; } }
+
+    #aviso {
+      display: none;
+      font-size: 12px;
+      color: #b3261e;
+      margin-top: 4px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .sonando .eq span { animation: none; height: 12px; }
+      #btn { transition: none; }
     }
   </style>
 </head>
 <body>
-  <div class="contenedor">
-    <!--
-      Reproductor oficial de SoundCloud.
-      El usuario pulsa el Play DENTRO del propio reproductor: ese clic
-      es el que Chrome necesita para permitir el audio dentro de Google Sites.
-    -->
-    <iframe
-      title="Reproductor de SoundCloud"
-      allow="autoplay; encrypted-media"
-      src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/brunomars/just-the-way-you-are-7&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false">
-    </iframe>
+  <div class="centro">
+    <div class="player" id="player">
+      <button id="btn" type="button" aria-label="Reproducir música">
+        <svg class="ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+        <svg class="ico-pausa" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+      </button>
+
+      <div class="info">
+        <div class="titulo" id="titulo"></div>
+        <div class="credito" id="credito"></div>
+        <div class="barra" id="barra" role="progressbar" aria-label="Progreso de la canción" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div id="progreso"></div>
+        </div>
+        <div id="aviso">No se pudo cargar el audio.</div>
+      </div>
+
+      <div class="eq" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    </div>
   </div>
+
+  <audio id="audio" loop preload="metadata"></audio>
+
+  <script>
+    // ============ CONFIGURACIÓN ============
+    var ARCHIVO = 'musica.mp3';          // nombre del MP3 que subas al repositorio
+    var TITULO  = 'Música de fondo';     // texto que se muestra (ej. "Nuestra canción")
+    var CREDITO = '';                    // ej. 'Music by Kevin MacLeod (incompetech.com) · CC BY 4.0'
+                                         // Déjalo vacío ('') si la licencia no pide crédito.
+    var VOLUMEN = 0.8;                   // de 0 a 1
+    // =======================================
+
+    var audio = document.getElementById('audio');
+    var btn = document.getElementById('btn');
+    var player = document.getElementById('player');
+    var progreso = document.getElementById('progreso');
+    var barra = document.getElementById('barra');
+    var aviso = document.getElementById('aviso');
+
+    document.getElementById('titulo').textContent = TITULO;
+    document.getElementById('credito').textContent = CREDITO;
+    audio.src = ARCHIVO;
+    audio.volume = VOLUMEN;
+
+    function marcar(sonando) {
+      player.classList.toggle('sonando', sonando);
+      btn.setAttribute('aria-label', sonando ? 'Pausar música' : 'Reproducir música');
+    }
+
+    btn.addEventListener('click', function () {
+      if (audio.paused) {
+        var p = audio.play();
+        if (p && p.catch) {
+          p.catch(function () { marcar(false); aviso.style.display = 'block'; });
+        }
+      } else {
+        audio.pause();
+      }
+    });
+
+    // El estado visual sigue al estado REAL del audio
+    audio.addEventListener('playing', function () { marcar(true); aviso.style.display = 'none'; });
+    audio.addEventListener('pause',   function () { marcar(false); });
+    audio.addEventListener('error',   function () { marcar(false); aviso.style.display = 'block'; });
+
+    audio.addEventListener('timeupdate', function () {
+      if (!audio.duration) return;
+      var pct = (audio.currentTime / audio.duration) * 100;
+      progreso.style.width = pct + '%';
+      barra.setAttribute('aria-valuenow', Math.round(pct));
+    });
+
+    barra.addEventListener('click', function (e) {
+      if (!audio.duration) return;
+      var r = barra.getBoundingClientRect();
+      audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
+    });
+  </script>
 </body>
 </html>
