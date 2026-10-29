@@ -12,82 +12,36 @@
       height: 100%;
       background: transparent;
       overflow: hidden;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     }
     .contenedor {
       width: 100%;
-      min-height: 100%;
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 0 8px;
+      box-sizing: border-box;
     }
-    #activar {
-      appearance: none;
+    iframe {
+      width: 100%;
+      max-width: 700px;
+      height: 166px;
       border: 0;
-      cursor: pointer;
-      padding: 12px 22px;
-      border-radius: 999px;
-      font-size: 16px;
-      font-weight: 600;
-      color: #fff;
-      background: #1a1a1a;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
     }
-    #activar:hover { background: #333; }
-    #activar:focus-visible { outline: 3px solid #6aa6ff; outline-offset: 2px; }
   </style>
 </head>
 <body>
   <div class="contenedor">
-    <button id="activar" type="button">▶ Activar música</button>
-    <div id="widget"></div>
+    <!--
+      Reproductor oficial de SoundCloud.
+      El usuario pulsa el Play DENTRO del propio reproductor: ese clic
+      es el que Chrome necesita para permitir el audio dentro de Google Sites.
+    -->
+    <iframe
+      title="Reproductor de SoundCloud"
+      allow="autoplay; encrypted-media"
+      src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/brunomars/just-the-way-you-are-7&color=%23ff5500&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false">
+    </iframe>
   </div>
-
-  <script>
-    (function () {
-      var boton = document.getElementById('activar');
-      var zona = document.getElementById('widget');
-      var cargado = false;
-
-      // Intenta pulsar el botón Play del widget justo después del clic del usuario.
-      // Es un intento "best effort": si no encuentra el botón, no pasa nada.
-      function intentarPlay() {
-        var fin = Date.now() + 6000;
-        var timer = setInterval(function () {
-          if (Date.now() > fin) { clearInterval(timer); return; }
-          try {
-            var candidatos = zona.querySelectorAll('button, [role="button"]');
-            for (var i = 0; i < candidatos.length; i++) {
-              var el = candidatos[i];
-              var txt = ((el.getAttribute('aria-label') || '') + ' ' + (el.getAttribute('title') || '')).toLowerCase();
-              if (/play|reproducir/.test(txt) && !/pause|pausa/.test(txt)) {
-                el.click();
-                clearInterval(timer);
-                return;
-              }
-            }
-          } catch (e) {}
-        }, 400);
-      }
-
-      boton.addEventListener('click', function () {
-        if (cargado) return;
-        cargado = true;
-        boton.style.display = 'none';
-
-        // 1) Crea el contenedor del widget (código de Elfsight, sin "lazy")
-        var div = document.createElement('div');
-        div.className = 'elfsight-app-2dc98848-e06e-449b-8382-685048a70995';
-        zona.appendChild(div);
-
-        // 2) Carga el script de Elfsight DESPUÉS del clic
-        var s = document.createElement('script');
-        s.src = 'https://elfsightcdn.com/platform.js';
-        s.async = true;
-        s.onload = intentarPlay;
-        document.body.appendChild(s);
-      });
-    })();
-  </script>
 </body>
 </html>
